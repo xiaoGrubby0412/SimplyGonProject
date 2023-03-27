@@ -15,7 +15,8 @@ namespace Simplygon
 
         public static ISimplygon InitSimplygon(out EErrorCodes errorCode, out string errorMessage)
         {
-            return InitSimplygonInternal(null, null, out errorCode, out errorMessage);
+            return InitSimplygonInternal(null, 
+                null, out errorCode, out errorMessage);
         }
 
         public static ISimplygon InitSimplygon(string sdkPath, out EErrorCodes errorCode, out string errorMessage)
