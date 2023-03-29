@@ -3,8 +3,6 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
-using Simplygon;
-using Simplygon.SPL.v80.Processor;
 
 namespace Ftp.Editor
 {
@@ -15,6 +13,143 @@ namespace Ftp.Editor
         private const string floorName = "StoneFloor";
         private static List<Transform> floorObjs;
 
+        [MenuItem("Tools/GameObjectTools/CreateBuildingsMesh", false, 30)]
+        static void CreateBuildingsMesh()
+        {
+            if (Selection.gameObjects == null || Selection.gameObjects.Length == 0)
+            {
+                EditorUtility.DisplayDialog("No Object Selected", "Please select any GameObject to Export to FBX",
+                    "Okay");
+                return;
+            }
+
+            if (Selection.gameObjects != null && Selection.gameObjects.Length > 0)
+            {
+                for (int i = 0; i < Selection.gameObjects.Length; i++)
+                {
+                    CreateBuildingMesh(Selection.gameObjects[i]);
+                }
+            }
+        }
+
+        [MenuItem("GameObject/GameObjectTools/CreateBuildingMesh", false, 30)]
+        static void CreateBuildMesh()
+        {
+            if (Selection.activeGameObject == null)
+            {
+                EditorUtility.DisplayDialog("No Object Selected", "Please select any GameObject to Export to FBX",
+                    "Okay");
+                return;
+            }
+            
+            GameObject currentGameObject = Selection.activeObject as GameObject;
+
+            if (currentGameObject == null)
+            {
+                EditorUtility.DisplayDialog("Warning", "Item selected is not a GameObject", "Okay");
+                return;
+            }
+            
+            CreateBuildingMesh(currentGameObject);
+        }
+
+        static void CreateBuildingMesh(GameObject currentGameObject)
+        {
+            string colliderObjName = "BuildingSimpleMeshObj";
+
+            MeshFilter[] meshFilters = CreatMeshFilterList(currentGameObject);
+            if (meshFilters.Length < 1)
+            {
+                EditorUtility.DisplayDialog("Warning", "Item selected has no MeshFilters", "Okay");
+                return;
+            }
+
+            GameObject meshParentObj = GameObject.Find(colliderObjName);
+            if (meshParentObj == null)
+                meshParentObj = new GameObject(colliderObjName);
+
+            string name = currentGameObject.name;
+            GameObject obj = CombineMeshesWithMutliMaterial(meshFilters, name);
+            
+            obj.layer = LayerMask.NameToLayer("Ground");
+            obj.transform.SetParent(meshParentObj.transform);
+
+        }
+        
+        [MenuItem("Tools/GameObjectTools/CreateBuildingsCollider", false, 30)]
+        static void CreateBuildingsCollider()
+        {
+            if (Selection.gameObjects == null || Selection.gameObjects.Length == 0)
+            {
+                EditorUtility.DisplayDialog("No Object Selected", "Please select any GameObject to Export to FBX",
+                    "Okay");
+                return;
+            }
+
+            if (Selection.gameObjects != null && Selection.gameObjects.Length > 0)
+            {
+                for (int i = 0; i < Selection.gameObjects.Length; i++)
+                {
+                    CreateBuildingCollider(Selection.gameObjects[i]);
+                }
+            }
+        }
+
+        [MenuItem("GameObject/GameObjectTools/CreateBuildingCollider", false, 30)]
+        static void CreateBuildingCollider()
+        {
+            if (Selection.activeGameObject == null)
+            {
+                EditorUtility.DisplayDialog("No Object Selected", "Please select any GameObject to Export to FBX",
+                    "Okay");
+                return;
+            }
+
+            GameObject currentGameObject = Selection.activeObject as GameObject;
+
+            if (currentGameObject == null)
+            {
+                EditorUtility.DisplayDialog("Warning", "Item selected is not a GameObject", "Okay");
+                return;
+            }
+            
+            CreateBuildingCollider(currentGameObject);
+        }
+        
+        static void CreateBuildingCollider(GameObject currentGameObject)
+        {
+            string colliderObjName = "BuildingColliderObj";
+
+            MeshFilter[] meshFilters = CreatMeshFilterList(currentGameObject);
+            if (meshFilters.Length < 1)
+            {
+                EditorUtility.DisplayDialog("Warning", "Item selected has no MeshFilters", "Okay");
+                return;
+            }
+
+            GameObject colliderObj = GameObject.Find(colliderObjName);
+            if (colliderObj == null)
+                colliderObj = new GameObject(colliderObjName);
+
+            string name = currentGameObject.name;
+            GameObject obj = CombineMeshesWithMutliMaterial(meshFilters, name);
+
+            MeshCollider mc = obj.GetComponent<MeshCollider>();
+            if (mc == null)
+                mc = obj.AddComponent<MeshCollider>();
+            mc.convex = false;
+
+            GameObject newGameObj = new GameObject(obj.name);
+            MeshCollider newMc = newGameObj.AddComponent<MeshCollider>();
+            newMc.sharedMesh = mc.sharedMesh;
+            newMc.convex = false;
+
+            GameObject.DestroyImmediate(obj);
+
+            newGameObj.layer = LayerMask.NameToLayer("Wall");
+            newGameObj.transform.SetParent(colliderObj.transform);
+        }
+        
         [MenuItem("GameObject/GameObjectTools/SeparateColliderAndWallCollider", false, 30)]
         static void SeparateColliderAndWallCollider()
         {
@@ -114,55 +249,6 @@ namespace Ftp.Editor
             newGameObj.transform.SetPositionAndRotation(trans.position, trans.rotation);
             newGameObj.transform.localScale = trans.localScale;
             newGameObj.layer = LayerMask.NameToLayer(layerName);
-        }
-
-        [MenuItem("GameObject/GameObjectTools/CreateBuildingCollider", false, 30)]
-        static void CreateBuildingCollider()
-        {
-            string colliderObjName = "BuildingColliderObj";
-            if (Selection.activeGameObject == null)
-            {
-                EditorUtility.DisplayDialog("No Object Selected", "Please select any GameObject to Export to FBX",
-                    "Okay");
-                return;
-            }
-
-            GameObject currentGameObject = Selection.activeObject as GameObject;
-
-            if (currentGameObject == null)
-            {
-                EditorUtility.DisplayDialog("Warning", "Item selected is not a GameObject", "Okay");
-                return;
-            }
-
-            MeshFilter[] meshFilters = CreatMeshFilterList(currentGameObject);
-            if (meshFilters.Length < 1)
-            {
-                EditorUtility.DisplayDialog("Warning", "Item selected has no MeshFilters", "Okay");
-                return;
-            }
-
-            GameObject colliderObj = GameObject.Find(colliderObjName);
-            if (colliderObj == null)
-                colliderObj = new GameObject(colliderObjName);
-
-            string name = currentGameObject.name;
-            GameObject obj = CombineMeshesWithMutliMaterial(meshFilters, name);
-
-            MeshCollider mc = obj.GetComponent<MeshCollider>();
-            if (mc == null)
-                mc = obj.AddComponent<MeshCollider>();
-            mc.convex = true;
-
-            GameObject newGameObj = new GameObject(obj.name);
-            MeshCollider newMc = newGameObj.AddComponent<MeshCollider>();
-            newMc.sharedMesh = mc.sharedMesh;
-            newMc.convex = true;
-
-            GameObject.DestroyImmediate(obj);
-
-            newGameObj.layer = LayerMask.NameToLayer("Wall");
-            newGameObj.transform.SetParent(colliderObj.transform);
         }
 
         public static (float x_min, float y_min, float z_min, float x_max, float y_max, float z_max) GetGameObjectsMesh(
@@ -430,43 +516,8 @@ namespace Ftp.Editor
 
             return mFilters.ToArray();
         }
-
-        [MenuItem("GameObject/GameObjectTools/CreateBuildingMesh", false, 30)]
-        static void CreateBuildingMesh()
-        {
-            string colliderObjName = "BuildingColliderObj";
-            if (Selection.activeGameObject == null)
-            {
-                EditorUtility.DisplayDialog("No Object Selected", "Please select any GameObject to Export to FBX",
-                    "Okay");
-                return;
-            }
-
-            GameObject currentGameObject = Selection.activeObject as GameObject;
-
-            if (currentGameObject == null)
-            {
-                EditorUtility.DisplayDialog("Warning", "Item selected is not a GameObject", "Okay");
-                return;
-            }
-
-            MeshFilter[] meshFilters = CreatMeshFilterList(currentGameObject);
-            if (meshFilters.Length < 1)
-            {
-                EditorUtility.DisplayDialog("Warning", "Item selected has no MeshFilters", "Okay");
-                return;
-            }
-
-            GameObject colliderObj = GameObject.Find(colliderObjName);
-            if (colliderObj == null)
-                colliderObj = new GameObject(colliderObjName);
-
-            string name = currentGameObject.name;
-            GameObject obj = CombineMeshesWithMutliMaterial(meshFilters, name);
-
-        }
-
-
+        
+        
 
         #region oldCode
 
