@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Autodesk.Fbx;
 using UnityEditor;
 
 namespace Ftp.Editor
@@ -30,6 +31,12 @@ namespace Ftp.Editor
                     CreateBuildingMesh(Selection.gameObjects[i]);
                 }
             }
+        }
+
+        [MenuItem("GameObject/GameObjectTools/TestRemeshing", false, 30)]
+        static void TestRemeshing()
+        {
+            RemeshingWithHoleFilling.TestRemeshing();
         }
 
         [MenuItem("GameObject/GameObjectTools/CreateBuildingMesh", false, 30)]
