@@ -82,11 +82,11 @@ public class RemeshingWithHoleFilling
             var warningCount = warnings.GetItemCount();
             if (warningCount > 0)
             {
-                Debug.LogError("Warnings:");
+                Debug.LogWarning("Warnings:");
                 for (uint warningIndex = 0; warningIndex < warningCount; ++warningIndex)
                 {
                     string warningString = warnings.GetItem((int)warningIndex);
-                    Debug.LogError(warningString);
+                    Debug.LogWarning(warningString);
                 }
 
                 sg.ClearWarningMessages();
@@ -152,13 +152,12 @@ public class RemeshingWithHoleFilling
     private const string outPutFloder = "SimplyGonOutPut";
     private const string suffixFbx = ".fbx";
     private const string suffixPrefab = ".prefab";
-    public static int TestRemeshing()
+    public static int StartRemeshing(string path)
     {
-        string path = "F:/ProjectGitHub/SimplyGonProject/Assets/sofa/Model/sofa1.fbx";
-        string outPutName = "Output_sofa1_80";
+        string outPutName = Path.GetFileNameWithoutExtension(path);
         string outPutFbxPath = outPutFloder + "/" + outPutName + suffixFbx;
         string outPutPrefabPath = outPutFloder + "/" + outPutName + suffixPrefab;
-        //RunRemeshing(path, outPutfolder, outPutName);
+        RunRemeshing(path, outPutFloder, outPutName + suffixFbx);
         string destFileName = Application.dataPath + "/" + outPutFbxPath;
         if (AssetDatabase.IsValidFolder(Path.Combine("Assets", outPutFloder)) == false)
         {
@@ -169,10 +168,11 @@ public class RemeshingWithHoleFilling
             File.Delete(destFileName);
             
         File.Copy(outPutFbxPath, destFileName);
+        AssetDatabase.ImportAsset("Assets/" + outPutFbxPath);
         GameObject go = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/" + outPutFbxPath);
         go = GameObject.Instantiate(go);
         PrefabUtility.SaveAsPrefabAssetAndConnect(go, "Assets/" + outPutPrefabPath, InteractionMode.UserAction);
-
+        
         return 0;
     }
 }
