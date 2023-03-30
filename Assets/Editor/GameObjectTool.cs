@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Autodesk.Fbx;
 using UnityEditor;
+using UnityEditor.Formats.Fbx.Exporter;
 
 namespace Ftp.Editor
 {
@@ -36,9 +37,28 @@ namespace Ftp.Editor
         [MenuItem("GameObject/GameObjectTools/TestRemeshing", false, 30)]
         static void TestRemeshing()
         {
-            string path = "F:/ProjectGitHub/SimplyGonProject/Assets/sofa/Model/sofa1.fbx";
-            GameObject go = RemeshingWithHoleFilling.StartRemeshing(path);
-            CreateBuildingCollider(go);
+            if (Selection.gameObjects == null || Selection.gameObjects.Length == 0)
+            {
+                EditorUtility.DisplayDialog("No Object Selected", "Please select any GameObject to Export to FBX",
+                    "Okay");
+                return;
+            }
+
+            if (Selection.gameObjects != null && Selection.gameObjects.Length > 0)
+            {
+                for (int i = 0; i < Selection.gameObjects.Length; i++)
+                {
+                    GameObject go = CreateBuildingMesh(Selection.gameObjects[i]);
+                    //将 go 导出为FBX 返回路径
+                    string path = ExportToFBX(go);
+                    
+                    // string path = "F:/ProjectGitHub/SimplyGonProject/Assets/sofa/Model/sofa1.fbx";
+                    go = RemeshingWithHoleFilling.StartRemeshing(path);
+                    CreateBuildingCollider(go);
+                }
+            }
+            
+
         }
 
         [MenuItem("GameObject/GameObjectTools/CreateBuildingMesh", false, 30)]
@@ -62,15 +82,16 @@ namespace Ftp.Editor
             CreateBuildingMesh(currentGameObject);
         }
 
-        static void CreateBuildingMesh(GameObject currentGameObject)
+        static GameObject CreateBuildingMesh(GameObject currentGameObject)
         {
             string colliderObjName = "BuildingSimpleMeshObj";
 
             MeshFilter[] meshFilters = CreatMeshFilterList(currentGameObject);
             if (meshFilters.Length < 1)
             {
-                EditorUtility.DisplayDialog("Warning", "Item selected has no MeshFilters", "Okay");
-                return;
+                Debug.LogError("Item selected has no MeshFilters " + "GameObject name = " + currentGameObject.name);
+                //EditorUtility.DisplayDialog("Warning", "Item selected has no MeshFilters", "Okay");
+                return null;
             }
 
             GameObject meshParentObj = GameObject.Find(colliderObjName);
@@ -82,7 +103,7 @@ namespace Ftp.Editor
             
             obj.layer = LayerMask.NameToLayer("Ground");
             obj.transform.SetParent(meshParentObj.transform);
-
+            return obj;
         }
         
         [MenuItem("Tools/GameObjectTools/CreateBuildingsCollider", false, 30)]
@@ -525,8 +546,31 @@ namespace Ftp.Editor
 
             return mFilters.ToArray();
         }
-        
-        
+
+        public static string ExportToFBX(GameObject go)
+        {
+            var folderPath = "F:/SimplyGonExportFbx";
+            var filePath = System.IO.Path.Combine(folderPath, go.name + ".fbx");
+
+            if (System.IO.File.Exists(filePath))
+            {
+                Debug.LogErrorFormat("Failed to export to {0}, file already exists", filePath);
+                return null;
+            }
+
+            string exportFilePath = ModelExporter.ExportObjects(filePath, new UnityEngine.Object[] { go }); 
+            if (exportFilePath != null)
+            {
+                Debug.Log("Export FBX " + go.name + " successed!!");
+                // refresh the asset database so that the file appears in the
+                // asset folder view.
+                //AssetDatabase.Refresh();
+            }
+
+            return exportFilePath;
+        }
+
+
 
         #region oldCode
 
