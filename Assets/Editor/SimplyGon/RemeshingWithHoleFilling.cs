@@ -152,7 +152,7 @@ public class RemeshingWithHoleFilling
     private const string outPutFloder = "SimplyGonOutPut";
     private const string suffixFbx = ".fbx";
     private const string suffixPrefab = ".prefab";
-    public static int StartRemeshing(string path)
+    public static GameObject StartRemeshing(string path)
     {
         string outPutName = Path.GetFileNameWithoutExtension(path);
         string outPutFbxPath = outPutFloder + "/" + outPutName + suffixFbx;
@@ -173,6 +173,6 @@ public class RemeshingWithHoleFilling
         go = GameObject.Instantiate(go);
         PrefabUtility.SaveAsPrefabAssetAndConnect(go, "Assets/" + outPutPrefabPath, InteractionMode.UserAction);
         
-        return 0;
+        return go;
     }
 }

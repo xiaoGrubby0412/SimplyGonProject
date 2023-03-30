@@ -37,7 +37,8 @@ namespace Ftp.Editor
         static void TestRemeshing()
         {
             string path = "F:/ProjectGitHub/SimplyGonProject/Assets/sofa/Model/sofa1.fbx";
-            RemeshingWithHoleFilling.StartRemeshing(path);
+            GameObject go = RemeshingWithHoleFilling.StartRemeshing(path);
+            CreateBuildingCollider(go);
         }
 
         [MenuItem("GameObject/GameObjectTools/CreateBuildingMesh", false, 30)]
