@@ -34,7 +34,7 @@ namespace Ftp.Editor
             }
         }
 
-        [MenuItem("GameObject/GameObjectTools/TestRemeshing", false, 30)]
+        [MenuItem("Tools/GameObjectTools/TestRemeshing", false, 30)]
         static void TestRemeshing()
         {
             if (Selection.gameObjects == null || Selection.gameObjects.Length == 0)
