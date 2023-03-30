@@ -93,48 +93,7 @@ public class RemeshingWithHoleFilling
         }
     }
 
-    static void RunRemeshing(Simplygon.ISimplygon sg)
-    {
-        // Load scene to process.         
-        Debug.Log("Load scene to process.");
-        string path = "F:\\ProjectGitHub\\SimplyGonProject\\Assets\\sofa\\Model\\sofa1.fbx";
-        Simplygon.spScene sgScene = LoadScene(sg, path);
-
-        // Create the remeshing processor. 
-        using (Simplygon.spRemeshingProcessor sgRemeshingProcessor = sg.CreateRemeshingProcessor())
-        {
-            sgRemeshingProcessor.SetScene(sgScene);
-            using (Simplygon.spRemeshingSettings sgRemeshingSettings = sgRemeshingProcessor.GetRemeshingSettings())
-            {
-                // Set on-screen size target for remeshing. 
-                sgRemeshingSettings.SetOnScreenSize(80);
-
-                // Enable hole filling. 
-                sgRemeshingSettings.SetHoleFilling(Simplygon.EHoleFilling.Medium);
-            }
-
-            // Start the remeshing process.         
-            Debug.Log("Start the remeshing process.");
-            sgRemeshingProcessor.RunProcessing();
-        }
-
-        
-        // Replace original materials and textures from the scene with a new empty material, as the 
-        // remeshed object has a new UV set.  
-        sgScene.GetTextureTable().Clear();
-        sgScene.GetMaterialTable().Clear();
-        sgScene.GetMaterialTable().AddMaterial( sg.CreateMaterial() );
-
-        // Save processed scene.         
-        Debug.Log("Save processed scene.");
-        SaveScene(sg, sgScene, "Output_sofa1_80.fbx");
-
-        // Check log for any warnings or errors.         
-        Debug.Log("Check log for any warnings or errors.");
-        CheckLog(sg);
-    }
-
-    public static int TestRemeshing()
+    static int RunRemeshing(string path, string outPutName)
     {
         using (var sg = Simplygon.Loader.InitSimplygon(out var errorCode, out var errorMessage))
         {
@@ -143,8 +102,53 @@ public class RemeshingWithHoleFilling
                 Debug.Log($"Failed to initialize Simplygon: ErrorCode({(int)errorCode}) {errorMessage}");
                 return (int)errorCode;
             }
-            RunRemeshing(sg);
+            
+            // Load scene to process.         
+            Debug.Log("Load scene to process.");
+            Simplygon.spScene sgScene = LoadScene(sg, path);
+
+            // Create the remeshing processor. 
+            using (Simplygon.spRemeshingProcessor sgRemeshingProcessor = sg.CreateRemeshingProcessor())
+            {
+                sgRemeshingProcessor.SetScene(sgScene);
+                using (Simplygon.spRemeshingSettings sgRemeshingSettings = sgRemeshingProcessor.GetRemeshingSettings())
+                {
+                    // Set on-screen size target for remeshing. 
+                    sgRemeshingSettings.SetOnScreenSize(80);
+
+                    // Enable hole filling. 
+                    sgRemeshingSettings.SetHoleFilling(Simplygon.EHoleFilling.Medium);
+                }
+
+                // Start the remeshing process.         
+                Debug.Log("Start the remeshing process.");
+                sgRemeshingProcessor.RunProcessing();
+            }
+
+
+            // Replace original materials and textures from the scene with a new empty material, as the 
+            // remeshed object has a new UV set.  
+            sgScene.GetTextureTable().Clear();
+            sgScene.GetMaterialTable().Clear();
+            sgScene.GetMaterialTable().AddMaterial(sg.CreateMaterial());
+
+            // Save processed scene.         
+            Debug.Log("Save processed scene.");
+            SaveScene(sg, sgScene, outPutName);
+
+            // Check log for any warnings or errors.         
+            Debug.Log("Check log for any warnings or errors.");
+            CheckLog(sg);
         }
+
+        return 0;
+    }
+
+    public static int TestRemeshing()
+    {
+        string path = "F:\\ProjectGitHub\\SimplyGonProject\\Assets\\sofa\\Model\\sofa1.fbx";
+        string outPutName = "Output_sofa1_80.fbx";
+        RunRemeshing(path, outPutName);
 
         return 0;
     }
