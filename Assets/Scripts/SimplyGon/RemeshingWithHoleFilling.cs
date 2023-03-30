@@ -2,7 +2,10 @@
 // Licensed under the MIT License. 
 
 using System;
+using System.IO;
+using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 public class RemeshingWithHoleFilling
 {
@@ -19,18 +22,19 @@ public class RemeshingWithHoleFilling
             {
                 throw new System.Exception("Failed to load scene.");
             }
+
             Simplygon.spScene sgScene = sgSceneImporter.GetScene();
             return sgScene;
         }
-
     }
 
-    static void SaveScene(Simplygon.ISimplygon sg, Simplygon.spScene sgScene, string path)
+    static void SaveScene(Simplygon.ISimplygon sg, Simplygon.spScene sgScene, string outPutfolder, string path)
     {
         // Create scene exporter. 
         using (Simplygon.spSceneExporter sgSceneExporter = sg.CreateSceneExporter())
         {
-            string outputScenePath = string.Join("", new string[] { "output\\", "RemeshingWithHoleFilling", "_", path });
+            string outputScenePath = string.Join("",
+                new string[] { outPutfolder + "\\", path });
             sgSceneExporter.SetExportFilePath(outputScenePath);
             sgSceneExporter.SetScene(sgScene);
 
@@ -41,7 +45,6 @@ public class RemeshingWithHoleFilling
                 throw new System.Exception("Failed to save scene.");
             }
         }
-
     }
 
     static void CheckLog(Simplygon.ISimplygon sg)
@@ -61,6 +64,7 @@ public class RemeshingWithHoleFilling
                     string errorString = errors.GetItem((int)errorIndex);
                     Debug.LogError(errorString);
                 }
+
                 sg.ClearErrorMessages();
             }
         }
@@ -68,7 +72,7 @@ public class RemeshingWithHoleFilling
         {
             Debug.Log("No errors.");
         }
-        
+
         // Check if any warnings occurred. 
         bool hasWarnings = sg.WarningOccurred();
         if (hasWarnings)
@@ -84,6 +88,7 @@ public class RemeshingWithHoleFilling
                     string warningString = warnings.GetItem((int)warningIndex);
                     Debug.LogError(warningString);
                 }
+
                 sg.ClearWarningMessages();
             }
         }
@@ -93,7 +98,7 @@ public class RemeshingWithHoleFilling
         }
     }
 
-    static int RunRemeshing(string path, string outPutName)
+    static int RunRemeshing(string path, string outPutfolder, string outPutName)
     {
         using (var sg = Simplygon.Loader.InitSimplygon(out var errorCode, out var errorMessage))
         {
@@ -102,7 +107,7 @@ public class RemeshingWithHoleFilling
                 Debug.Log($"Failed to initialize Simplygon: ErrorCode({(int)errorCode}) {errorMessage}");
                 return (int)errorCode;
             }
-            
+
             // Load scene to process.         
             Debug.Log("Load scene to process.");
             Simplygon.spScene sgScene = LoadScene(sg, path);
@@ -134,7 +139,7 @@ public class RemeshingWithHoleFilling
 
             // Save processed scene.         
             Debug.Log("Save processed scene.");
-            SaveScene(sg, sgScene, outPutName);
+            SaveScene(sg, sgScene, outPutfolder, outPutName);
 
             // Check log for any warnings or errors.         
             Debug.Log("Check log for any warnings or errors.");
@@ -144,13 +149,30 @@ public class RemeshingWithHoleFilling
         return 0;
     }
 
+    private const string outPutFloder = "SimplyGonOutPut";
+    private const string suffixFbx = ".fbx";
+    private const string suffixPrefab = ".prefab";
     public static int TestRemeshing()
     {
-        string path = "F:\\ProjectGitHub\\SimplyGonProject\\Assets\\sofa\\Model\\sofa1.fbx";
-        string outPutName = "Output_sofa1_80.fbx";
-        RunRemeshing(path, outPutName);
+        string path = "F:/ProjectGitHub/SimplyGonProject/Assets/sofa/Model/sofa1.fbx";
+        string outPutName = "Output_sofa1_80";
+        string outPutFbxPath = outPutFloder + "/" + outPutName + suffixFbx;
+        string outPutPrefabPath = outPutFloder + "/" + outPutName + suffixPrefab;
+        //RunRemeshing(path, outPutfolder, outPutName);
+        string destFileName = Application.dataPath + "/" + outPutFbxPath;
+        if (AssetDatabase.IsValidFolder(Path.Combine("Assets", outPutFloder)) == false)
+        {
+            AssetDatabase.CreateFolder("Assets",outPutFloder);
+        }
+
+        if(File.Exists(destFileName))
+            File.Delete(destFileName);
+            
+        File.Copy(outPutFbxPath, destFileName);
+        GameObject go = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/" + outPutFbxPath);
+        go = GameObject.Instantiate(go);
+        PrefabUtility.SaveAsPrefabAssetAndConnect(go, "Assets/" + outPutPrefabPath, InteractionMode.UserAction);
 
         return 0;
     }
-
 }
