@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using Autodesk.Fbx;
 using UnityEditor;
 using UnityEditor.Formats.Fbx.Exporter;
@@ -54,7 +55,7 @@ namespace Ftp.Editor
                     
                     // string path = "F:/ProjectGitHub/SimplyGonProject/Assets/sofa/Model/sofa1.fbx";
                     go = RemeshingWithHoleFilling.StartRemeshing(path);
-                    CreateBuildingCollider(go);
+                    CreateBuildingColliderWithOutCombineMesh(go);
                 }
             }
             
@@ -145,7 +146,41 @@ namespace Ftp.Editor
             
             CreateBuildingCollider(currentGameObject);
         }
-        
+
+        /// <summary>
+        /// 不合并网格 直接创建碰撞体
+        /// </summary>
+        public static void CreateBuildingColliderWithOutCombineMesh(GameObject currentGameObject)
+        {
+            string colliderObjName = "BuildingColliderObj";
+
+            MeshFilter[] meshFilters = CreatMeshFilterList(currentGameObject);
+            if (meshFilters.Length < 1)
+            {
+                EditorUtility.DisplayDialog("Warning", "Item selected has no MeshFilters", "Okay");
+                return;
+            }
+            
+            GameObject colliderObj = GameObject.Find(colliderObjName);
+            if (colliderObj == null)
+                colliderObj = new GameObject(colliderObjName);
+            
+            MeshCollider mc = currentGameObject.GetComponent<MeshCollider>();
+            if (mc == null)
+                mc = currentGameObject.AddComponent<MeshCollider>();
+            mc.convex = false;
+            
+            GameObject newGameObj = new GameObject(currentGameObject.name);
+            MeshCollider newMc = newGameObj.AddComponent<MeshCollider>();
+            newMc.sharedMesh = mc.sharedMesh;
+            newMc.convex = false;
+
+            GameObject.DestroyImmediate(currentGameObject);
+
+            newGameObj.layer = LayerMask.NameToLayer("Wall");
+            newGameObj.transform.SetParent(colliderObj.transform);
+        }
+
         public static void CreateBuildingCollider(GameObject currentGameObject)
         {
             string colliderObjName = "BuildingColliderObj";
@@ -552,12 +587,9 @@ namespace Ftp.Editor
             var folderPath = "F:/SimplyGonExportFbx";
             var filePath = System.IO.Path.Combine(folderPath, go.name + ".fbx");
 
-            if (System.IO.File.Exists(filePath))
-            {
-                Debug.LogErrorFormat("Failed to export to {0}, file already exists", filePath);
-                return null;
-            }
-
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+            
             string exportFilePath = ModelExporter.ExportObjects(filePath, new UnityEngine.Object[] { go }); 
             if (exportFilePath != null)
             {

@@ -119,8 +119,9 @@ public class RemeshingWithHoleFilling
                 using (Simplygon.spRemeshingSettings sgRemeshingSettings = sgRemeshingProcessor.GetRemeshingSettings())
                 {
                     // Set on-screen size target for remeshing. 
-                    sgRemeshingSettings.SetOnScreenSize(300);
-
+                    sgRemeshingSettings.SetOnScreenSize(250);
+                    sgRemeshingSettings.SetHardEdgeAngle(45);
+                    Debug.Log("hardEdge == " + sgRemeshingSettings.GetHardEdgeAngle());
                     // Enable hole filling. 
                     //sgRemeshingSettings.SetHoleFilling(Simplygon.EHoleFilling.High);
                 }
