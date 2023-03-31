@@ -55,7 +55,7 @@ namespace Ftp.Editor
                     
                     // string path = "F:/ProjectGitHub/SimplyGonProject/Assets/sofa/Model/sofa1.fbx";
                     go = RemeshingWithHoleFilling.StartRemeshing(path);
-                    CreateBuildingColliderWithOutCombineMesh(go);
+                    CreateBuildingColliderWithOutCombineMesh(go, Selection.gameObjects[i].transform.position);
                 }
             }
             
@@ -100,10 +100,11 @@ namespace Ftp.Editor
                 meshParentObj = new GameObject(colliderObjName);
 
             string name = currentGameObject.name;
-            GameObject obj = CombineMeshesWithMutliMaterial(meshFilters, name);
+            GameObject obj = CombineMeshesWithMutliMaterial(currentGameObject, meshFilters, name);
             
             obj.layer = LayerMask.NameToLayer("Ground");
             obj.transform.SetParent(meshParentObj.transform);
+            obj.transform.position = currentGameObject.transform.position;
             return obj;
         }
         
@@ -150,7 +151,7 @@ namespace Ftp.Editor
         /// <summary>
         /// 不合并网格 直接创建碰撞体
         /// </summary>
-        public static void CreateBuildingColliderWithOutCombineMesh(GameObject currentGameObject)
+        public static void CreateBuildingColliderWithOutCombineMesh(GameObject currentGameObject, Vector3 worldPos)
         {
             string colliderObjName = "BuildingColliderObj";
 
@@ -179,6 +180,7 @@ namespace Ftp.Editor
 
             newGameObj.layer = LayerMask.NameToLayer("Wall");
             newGameObj.transform.SetParent(colliderObj.transform);
+            newGameObj.transform.position = worldPos;
         }
 
         public static void CreateBuildingCollider(GameObject currentGameObject)
@@ -197,7 +199,7 @@ namespace Ftp.Editor
                 colliderObj = new GameObject(colliderObjName);
 
             string name = currentGameObject.name;
-            GameObject obj = CombineMeshesWithMutliMaterial(meshFilters, name);
+            GameObject obj = CombineMeshesWithMutliMaterial(currentGameObject, meshFilters, name);
 
             MeshCollider mc = obj.GetComponent<MeshCollider>();
             if (mc == null)
@@ -364,7 +366,7 @@ namespace Ftp.Editor
             return (min.x, min.y, min.z, max.x, max.y, max.z);
         }
 
-        public static GameObject CombineMeshesWithMutliMaterial(MeshFilter[] meshFilters, string name)
+        public static GameObject CombineMeshesWithMutliMaterial(GameObject currentGameObject, MeshFilter[] meshFilters, string name)
         {
             GameObject gameObject = new GameObject();
             gameObject.name = name; //System.Math.Abs(gameObject.GetInstanceID()).ToString();
@@ -430,7 +432,8 @@ namespace Ftp.Editor
                                 combineInstance.mesh = meshFilters[j].sharedMesh;
                                 if (combineInstance.mesh != null && combineInstance.mesh.vertices != null)
                                 {
-                                    combineInstance.transform = meshFilters[j].transform.localToWorldMatrix;
+                                    Matrix4x4 matrix = meshFilters[j].transform.localToWorldMatrix;
+                                    combineInstance.transform = matrix;
                                     submeshCombineInstancesList.Add(combineInstance);
                                     verticesLength += combineInstance.mesh.vertices.Length;
                                 }
@@ -454,7 +457,11 @@ namespace Ftp.Editor
                 CombineInstance finalCombineInstance = new CombineInstance();
                 finalCombineInstance.subMeshIndex = 0;
                 finalCombineInstance.mesh = submesh;
-                finalCombineInstance.transform = Matrix4x4.identity;
+                Matrix4x4 matrix1 = Matrix4x4.identity;
+                matrix1.m03 = -currentGameObject.transform.position.x;
+                matrix1.m13 = -currentGameObject.transform.position.y;
+                matrix1.m23 = -currentGameObject.transform.position.z;
+                finalCombineInstance.transform = matrix1;
                 finalMeshCombineInstancesList.Add(finalCombineInstance);
             }
 
